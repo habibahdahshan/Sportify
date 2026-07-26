@@ -103,7 +103,7 @@
             <label class="admin-span-2">Description <textarea id="pfDesc" rows="3" placeholder="Full description for product page"></textarea></label>
             <label>Currency <input type="text" id="pfCurrency" value="LE"></label>
             <label>Base size (S/M/L) <input type="text" id="pfBaseSize" value="M" maxlength="4"></label>
-            <label>Compare-at price (optional) <input type="number" id="pfCompare" placeholder="for strikethrough" step="1"></label>
+            <label>Compare-at price (optional) <input type="number" id="pfCompare" placeholder="for strikethrough" min="0" step="1"></label>
           </div>
 
           <div class="admin-sizes-block">
@@ -188,4 +188,3 @@
   <script src="../Js/admin.js"></script>
 </body>
 </html>
-
