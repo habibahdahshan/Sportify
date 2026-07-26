@@ -1,1 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My profile · Sportify</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=Anton&family=Archivo+Black&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../CSS/shop.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="../../home.html" class="logo">Sportify</a>
+    <ul>
+      <li><a href="../../home.html">Home</a></li>
+      <li><a href="aboutus.html">About us</a></li>
+      <li><a href="contactus.html">Contact</a></li>
+    </ul>
+  </nav>
 
+  <main class="auth-page">
+    <div class="auth-card profile-card">
+      <h1>My profile</h1>
+      <p>Update your display name and profile picture. Saved only in this browser.</p>
+
+      <form id="profileForm" novalidate>
+        <div class="profile-avatar-block">
+          <img id="profileAvatarPreview" class="profile-avatar-preview" alt="Profile picture" src="">
+          <div class="profile-avatar-initial" id="profileAvatarInitial"></div>
+          <div class="profile-avatar-actions">
+            <label for="profileAvatarInput" class="profile-avatar-upload-btn">Choose photo</label>
+            <input type="file" id="profileAvatarInput" accept="image/*" hidden>
+            <button type="button" id="profileAvatarRemove" class="profile-avatar-remove-btn">Remove</button>
+          </div>
+        </div>
+
+        <label for="profileName">Username</label>
+        <input type="text" id="profileName" name="name" required maxlength="40" placeholder="Your name">
+
+        <label for="profileEmail">Email</label>
+        <input type="email" id="profileEmail" name="email" disabled>
+
+        <button type="submit">Save changes</button>
+      </form>
+      <p id="profileMsg" class="auth-msg" role="status"></p>
+      <p class="auth-alt"><a href="../../home.html">Back to home</a></p>
+    </div>
+  </main>
+
+  <script src="../Js/site-ui.js"></script>
+  <script src="../Js/profile.js"></script>
+</body>
+</html>
