@@ -1,0 +1,157 @@
+(function () {
+  var AUTH_KEY = 'sportify_user_v2';
+  var REGISTRY_KEY = 'sportify_users_registry';
+  var MAX_AVATAR_BYTES = 1.5 * 1024 * 1024; // ~1.5MB, keeps localStorage happy
+
+  function getCurrentUser() {
+    if (window.sportifyGetCurrentUser) return window.sportifyGetCurrentUser();
+    try {
+      var raw = sessionStorage.getItem(AUTH_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function profileKey(email) {
+    return 'sportify_profile_' + String(email || '').toLowerCase().trim();
+  }
+
+  function loadProfileExtras(email) {
+    try {
+      var raw = localStorage.getItem(profileKey(email));
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveProfileExtras(email, extras) {
+    try {
+      localStorage.setItem(profileKey(email), JSON.stringify(extras));
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+
+  function updateSessionUserName(name) {
+    try {
+      var raw = sessionStorage.getItem(AUTH_KEY);
+      if (!raw) return;
+      var user = JSON.parse(raw);
+      user.name = name;
+      sessionStorage.setItem(AUTH_KEY, JSON.stringify(user));
+    } catch (e) {}
+  }
+
+  function updateRegistryName(email, name) {
+    try {
+      var raw = localStorage.getItem(REGISTRY_KEY);
+      var list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) return;
+      var e = String(email || '').toLowerCase().trim();
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].email === e) {
+          list[i].name = name;
+          break;
+        }
+      }
+      localStorage.setItem(REGISTRY_KEY, JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  function setAvatarPreview(dataUrl, name) {
+    var img = document.getElementById('profileAvatarPreview');
+    var initial = document.getElementById('profileAvatarInitial');
+    if (dataUrl) {
+      img.src = dataUrl;
+      img.style.display = 'block';
+      initial.style.display = 'none';
+    } else {
+      img.removeAttribute('src');
+      img.style.display = 'none';
+      initial.textContent = (name || '?').trim().charAt(0).toUpperCase() || '?';
+      initial.style.display = 'flex';
+    }
+  }
+
+  function showMsg(text, good) {
+    var msg = document.getElementById('profileMsg');
+    if (msg) {
+      msg.textContent = text;
+      msg.style.color = good ? '#2e7d32' : '#c62828';
+    }
+    if (window.sportifyShowToast) window.sportifyShowToast(text, good ? 'success' : 'error');
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var user = getCurrentUser();
+    if (!user) {
+      if (window.sportifyShowToast) window.sportifyShowToast('You need to sign in first.', 'error');
+      window.location.href = 'login.html';
+      return;
+    }
+
+    var extras = loadProfileExtras(user.email) || {};
+    var currentAvatar = extras.avatar || null;
+    var currentName = extras.name || user.name || '';
+
+    document.getElementById('profileName').value = currentName;
+    document.getElementById('profileEmail').value = user.email || '';
+    setAvatarPreview(currentAvatar, currentName || user.email);
+
+    var avatarInput = document.getElementById('profileAvatarInput');
+    avatarInput.addEventListener('change', function () {
+      var file = avatarInput.files && avatarInput.files[0];
+      if (!file) return;
+      if (!file.type || file.type.indexOf('image/') !== 0) {
+        showMsg('Please choose an image file.', false);
+        avatarInput.value = '';
+        return;
+      }
+      if (file.size > MAX_AVATAR_BYTES) {
+        showMsg('Image is too large. Please pick one under 1.5MB.', false);
+        avatarInput.value = '';
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () {
+        currentAvatar = reader.result;
+        setAvatarPreview(currentAvatar, document.getElementById('profileName').value);
+      };
+      reader.onerror = function () {
+        showMsg('Could not read that image, please try another.', false);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('profileAvatarRemove').addEventListener('click', function () {
+      currentAvatar = null;
+      avatarInput.value = '';
+      setAvatarPreview(null, document.getElementById('profileName').value);
+    });
+
+    document.getElementById('profileName').addEventListener('input', function () {
+      if (!currentAvatar) setAvatarPreview(null, this.value);
+    });
+
+    document.getElementById('profileForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = document.getElementById('profileName').value.trim();
+      if (!name) {
+        showMsg('Please enter a username.', false);
+        return;
+      }
+      var ok = saveProfileExtras(user.email, { name: name, avatar: currentAvatar });
+      if (!ok) {
+        showMsg('Could not save your profile in this browser.', false);
+        return;
+      }
+      updateSessionUserName(name);
+      updateRegistryName(user.email, name);
+      window.dispatchEvent(new Event('sportify-auth-changed'));
+      showMsg('Profile updated successfully.', true);
+    });
+  });
+})();
