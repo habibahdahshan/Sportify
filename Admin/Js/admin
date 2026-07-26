@@ -442,7 +442,14 @@
       adminManaged: true,
     };
     var cmp = document.getElementById('pfCompare').value;
-    if (cmp !== '') payload.compareAt = parseFloat(cmp);
+    if (cmp !== '') {
+      var cmpVal = parseFloat(cmp);
+      if (isNaN(cmpVal) || cmpVal < 0) {
+        alert('Compare-at price cannot be negative.');
+        return null;
+      }
+      payload.compareAt = cmpVal;
+    }
     if (isNew) {
       payload.id = 'custom-' + Date.now();
     }
