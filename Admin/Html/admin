@@ -9,27 +9,27 @@
   <link rel="stylesheet" href="../CSS/admin.css">
 </head>
 <body>
-  <nav class="navbar">
+  <nav class="navbar admin-navbar">
     <a href="../../home.html" class="logo">Sportify</a>
-    <ul>
-      <li><a href="../../home.html">Home</a></li>
-      <li><a href="../../User/Html/Shopall.html">Shop</a></li>
-      <li><a href="../../User/Html/login.html">Customer sign in</a></li>
-    </ul>
+    <div class="admin-nav-badge">Admin Panel</div>
   </nav>
 
-  <main class="admin-page">
+  <main class="admin-page admin-entry-page">
     <div class="admin-login" id="adminLogin">
-      <h1 class="admin-staff-title">Staff sign-in</h1>
-      <p class="admin-helper-text">Use the staff password for this browser. Default: <strong>admin123</strong> (change after first login).</p>
-      <form id="adminLoginForm">
+      <div class="admin-login__header">
+        <span class="admin-login__badge">Administrator access</span>
+        <h1 class="admin-staff-title">Sportify Administration</h1>
+        <p class="admin-helper-text">Authorized staff only.</p>
+        <p class="admin-login__notice">This secure portal is reserved for approved staff. Normal customers cannot access the dashboard.</p>
+      </div>
+      <form id="adminLoginForm" class="admin-login-form">
         <input type="password" id="adminPassword" placeholder="Password" required autocomplete="current-password">
-        <button type="submit">Enter dashboard</button>
+        <button type="submit">Enter Dashboard</button>
       </form>
       <form id="adminSetPasswordForm" class="admin-set-password-panel">
-        <p class="admin-form-hint">Set new staff password (optional)</p>
+        <p class="admin-form-hint">Change password (optional)</p>
         <input type="password" id="newAdminPwd" placeholder="New password" minlength="4" autocomplete="new-password">
-        <button type="submit">Save password</button>
+        <button type="submit">Save Password</button>
       </form>
     </div>
 
