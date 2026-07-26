@@ -20,19 +20,9 @@
   <main class="auth-page">
     <div class="auth-card profile-card">
       <h1>My profile</h1>
-      <p>Update your display name and profile picture. Saved only in this browser.</p>
+      <p>Update your display name. Saved only in this browser.</p>
 
       <form id="profileForm" novalidate>
-        <div class="profile-avatar-block">
-          <img id="profileAvatarPreview" class="profile-avatar-preview" alt="Profile picture" src="">
-          <div class="profile-avatar-initial" id="profileAvatarInitial"></div>
-          <div class="profile-avatar-actions">
-            <label for="profileAvatarInput" class="profile-avatar-upload-btn">Choose photo</label>
-            <input type="file" id="profileAvatarInput" accept="image/*" hidden>
-            <button type="button" id="profileAvatarRemove" class="profile-avatar-remove-btn">Remove</button>
-          </div>
-        </div>
-
         <label for="profileName">Username</label>
         <input type="text" id="profileName" name="name" required maxlength="40" placeholder="Your name">
 
