@@ -374,7 +374,14 @@
 
   appendOrder(order);
 
-  localStorage.setItem('sportify_cart', '[]');
+  if (window.sportifySaveCart) {
+    window.sportifySaveCart([]);
+  } else {
+    try {
+      sessionStorage.setItem('sportify_cart', '[]');
+      localStorage.setItem('sportify_cart', '[]');
+    } catch (e) {}
+  }
 
   window.location.href =
     window.sportifyHtmlPage

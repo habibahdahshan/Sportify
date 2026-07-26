@@ -1,6 +1,83 @@
 
 (function () {
   var CART_KEY = 'sportify_cart';
+  var AUTH_KEY = 'sportify_user_v2';
+
+  function getLoggedInUser() {
+    try {
+      var raw = sessionStorage.getItem(AUTH_KEY);
+      if (raw) return JSON.parse(raw);
+      var stored = localStorage.getItem(AUTH_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return null;
+  }
+
+  function isLoggedIn() {
+    return !!getLoggedInUser();
+  }
+
+  function requireAuth(message) {
+    if (isLoggedIn()) return true;
+
+    var promptMessage = message || 'You need to sign in first to continue shopping.';
+    var loginUrl = window.sportifyHtmlPage ? window.sportifyHtmlPage('login.html') : 'login.html';
+
+    if (window.confirm) {
+      var shouldGoToLogin = window.confirm(promptMessage + '\n\nGo to sign in?');
+      if (shouldGoToLogin && window.location) {
+        window.location.href = loginUrl;
+      }
+      return false;
+    }
+
+    if (window.sportifyShowToast) {
+      window.sportifyShowToast(promptMessage, 'error');
+    } else if (window.console && window.console.warn) {
+      window.console.warn(promptMessage);
+    }
+    return false;
+  }
+
+  function logoutAuth() {
+    try {
+      sessionStorage.removeItem(AUTH_KEY);
+      localStorage.removeItem(AUTH_KEY);
+    } catch (e) {}
+    if (window.dispatchEvent) {
+      window.dispatchEvent(new Event('sportify-auth-changed'));
+    }
+    return true;
+  }
+
+  function syncAuthNav() {
+    var signedIn = isLoggedIn();
+    var authLinks = document.querySelectorAll('nav a[href*="login.html"], .nav-main a[href*="login.html"], .navbar a[href*="login.html"]');
+
+    authLinks.forEach(function (link) {
+      if (!link || link.dataset.authNavBound) return;
+      link.dataset.authNavBound = '1';
+
+      if (signedIn) {
+        link.textContent = 'Logout';
+        link.setAttribute('href', '#');
+        link.setAttribute('aria-label', 'Log out');
+        link.setAttribute('title', 'Log out');
+        link.addEventListener('click', function (event) {
+          event.preventDefault();
+          logoutAuth();
+          syncAuthNav();
+          if (window.location && window.location.reload) {
+            window.location.reload();
+          }
+        });
+      } else {
+        link.textContent = 'Sign in';
+        link.setAttribute('aria-label', 'Sign in');
+        link.setAttribute('title', 'Sign in');
+      }
+    });
+  }
 
   function clearCart() {
     try {
@@ -11,12 +88,32 @@
     updateCartCount();
   }
 
+  function readCartFromStorage(storage) {
+    try {
+      var raw = storage.getItem(CART_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeCartToStorage(items) {
+    var payload = Array.isArray(items) ? items : [];
+    try {
+      sessionStorage.setItem(CART_KEY, JSON.stringify(payload));
+    } catch (e) {}
+    try {
+      localStorage.setItem(CART_KEY, JSON.stringify(payload));
+    } catch (e) {}
+  }
+
   function getCart() {
     try {
-      var raw = sessionStorage.getItem(CART_KEY);
-      if (!raw) return [];
-      var data = JSON.parse(raw);
-      if (!Array.isArray(data)) return [];
+      var sessionData = readCartFromStorage(sessionStorage);
+      var localData = sessionData == null ? readCartFromStorage(localStorage) : null;
+      var data = sessionData != null ? sessionData : (localData != null ? localData : []);
       var changed = false;
       var normalized = data
         .map(function (item) {
@@ -45,10 +142,7 @@
         }
       }
       if (changed) {
-        try {
-          sessionStorage.setItem(CART_KEY, JSON.stringify(normalized));
-          localStorage.removeItem(CART_KEY);
-        } catch (e2) {}
+        writeCartToStorage(normalized);
       }
       return normalized;
     } catch (e) {
@@ -57,16 +151,14 @@
   }
 
   function saveCart(items) {
-    try {
-      sessionStorage.setItem(CART_KEY, JSON.stringify(items));
-      localStorage.removeItem(CART_KEY);
-    } catch (e) {}
+    writeCartToStorage(items);
     renderCart();
     updateCartCount();
   }
 
   function lineKey(item) {
-    return (item.productId || item.name) + '|' + String(item.size || '—');
+    var base = item && (item.productId || item.id || item.name || '');
+    return String(base) + '|' + String(item && item.size ? item.size : '—');
   }
 
   function updateCartCount() {
@@ -215,8 +307,11 @@
    * Legacy: addToCart(name, price) — image optional.
    */
   function addToCart(name, price, image, size, productId, options) {
-    if (window.sportifyRequireAuth && !window.sportifyIsLoggedIn()) {
-      window.sportifyRequireAuth('You need to sign in first to continue shopping.');
+    if (window.sportifyRequireAuth) {
+      if (!window.sportifyRequireAuth('You need to sign in first to continue shopping.')) {
+        return false;
+      }
+    } else if (!isLoggedIn()) {
       return false;
     }
     if (typeof image === 'object' && image !== null && !Array.isArray(image)) {
@@ -589,6 +684,9 @@
   }
 
   window.addToCart = addToCart;
+  window.sportifyIsLoggedIn = isLoggedIn;
+  window.sportifyRequireAuth = requireAuth;
+  window.sportifyLogout = logoutAuth;
   window.sportifyIsFavoriteId = sportifyIsFavoriteId;
   window.sportifyToggleFavoriteId = sportifyToggleFavoriteId;
   window.sportifyAddFromShopCard = sportifyAddFromShopCard;
@@ -696,16 +794,19 @@
     });
   }
 
-  window.addEventListener('sportify-auth-changed', function () {
-    if (!window.sportifyIsLoggedIn || !window.sportifyIsLoggedIn()) {
+  function maybeClearCartForUnauthenticatedUsers() {
+    if (typeof window.sportifyIsLoggedIn === 'function' && !window.sportifyIsLoggedIn()) {
       clearCart();
     }
+  }
+
+  window.addEventListener('sportify-auth-changed', function () {
+    maybeClearCartForUnauthenticatedUsers();
   });
 
   document.addEventListener('DOMContentLoaded', function () {
-    if (!window.sportifyIsLoggedIn || !window.sportifyIsLoggedIn()) {
-      clearCart();
-    }
+    maybeClearCartForUnauthenticatedUsers();
+    syncAuthNav();
     injectFavoritesDrawer();
     wireShopProductLinks();
     syncShopGridWithCatalog();

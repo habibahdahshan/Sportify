@@ -49,6 +49,27 @@
     }
   }
 
+  function isLoggedIn() {
+    return !!getUser();
+  }
+
+  function requireAuth(message) {
+    if (isLoggedIn()) return true;
+    if (window.sportifyShowToast) {
+      window.sportifyShowToast(message || 'Please sign in first.', 'error');
+    }
+    return false;
+  }
+
+  function logoutUser() {
+    try {
+      sessionStorage.removeItem(USER_KEY);
+      localStorage.removeItem(USER_KEY);
+    } catch (e) {}
+    window.dispatchEvent(new Event('sportify-auth-changed'));
+    return true;
+  }
+
   function setUser(user) {
     sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     try {
@@ -117,6 +138,10 @@
   /* ===============================
      DOM READY
      =============================== */
+  window.sportifyIsLoggedIn = isLoggedIn;
+  window.sportifyRequireAuth = requireAuth;
+  window.sportifyLogout = logoutUser;
+
   document.addEventListener("DOMContentLoaded", function () {
     try {
       localStorage.removeItem(USER_KEY);

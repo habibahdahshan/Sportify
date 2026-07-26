@@ -503,19 +503,6 @@
       });
     }
 
-    var setPwd = document.getElementById('adminSetPasswordForm');
-    if (setPwd) {
-      setPwd.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var np = document.getElementById('newAdminPwd');
-        if (np && np.value.length >= 4) {
-          localStorage.setItem(PWD_KEY, np.value);
-          alert('Staff password updated for this browser.');
-          np.value = '';
-        }
-      });
-    }
-
     var lo = document.getElementById('adminLogout');
     if (lo) {
       lo.addEventListener('click', function () {
